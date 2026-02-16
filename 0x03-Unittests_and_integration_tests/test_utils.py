@@ -1,33 +1,33 @@
 #!/usr/bin/env python3
-"""Unit tests for utils.get_json"""
+"""Unit tests for utils.memoize"""
 
 import unittest
-from unittest.mock import patch, Mock
-import utils
+from unittest.mock import patch
+from utils import memoize
 
 
-class TestGetJson(unittest.TestCase):
-    """Test cases for utils.get_json"""
+class TestMemoize(unittest.TestCase):
+    """Test cases for memoize decorator"""
 
-    @patch('utils.requests.get')
-    def test_get_json(self, mock_get):
-        """Test that get_json returns expected payload"""
+    def test_memoize(self):
+        """Test that memoize caches result and calls method once"""
 
-        test_url = "http://example.com"
-        test_payload = {"key": "value"}
+        class TestClass:
+            def a_method(self):
+                return 42
 
-        # Create mock response object
-        mock_response = Mock()
-        mock_response.json.return_value = test_payload
-        mock_get.return_value = mock_response
+            @memoize
+            def a_property(self):
+                return self.a_method()
 
-        # Call function
-        result = utils.get_json(test_url)
+        with patch.object(TestClass, "a_method", return_value=42) as mock_method:
+            obj = TestClass()
 
-        # Assertions
-        mock_get.assert_called_once_with(test_url)
-        self.assertEqual(result, test_payload)
+            # Call twice
+            result1 = obj.a_property
+            result2 = obj.a_property
 
-
-if __name__ == "__main__":
-    unittest.main()
+            # Assertions
+            self.assertEqual(result1, 42)
+            self.assertEqual(result2, 42)
+            mock_method.assert_called_once()
