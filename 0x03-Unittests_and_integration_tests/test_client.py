@@ -1,14 +1,35 @@
+#!/usr/bin/env python3
+"""Unit tests for client.GithubOrgClient"""
+
+import unittest
 from unittest.mock import patch, PropertyMock
+from parameterized import parameterized
 from client import GithubOrgClient
 
 
 class TestGithubOrgClient(unittest.TestCase):
     """Test cases for GithubOrgClient"""
 
-    # (Keep your previous test_org here)
+    @parameterized.expand([
+        ("google",),
+        ("abc",),
+    ])
+    @patch("client.get_json")
+    def test_org(self, org_name, mock_get_json):
+        """Test that org returns correct value"""
+
+        mock_get_json.return_value = {"login": org_name}
+
+        client = GithubOrgClient(org_name)
+        result = client.org
+
+        self.assertEqual(result, {"login": org_name})
+        mock_get_json.assert_called_once_with(
+            f"https://api.github.com/orgs/{org_name}"
+        )
 
     def test_public_repos_url(self):
-        """Test that _public_repos_url returns expected URL"""
+        """Test that _public_repos_url returns expected repos_url"""
 
         test_payload = {
             "repos_url": "https://api.github.com/orgs/test_org/repos"
@@ -23,10 +44,13 @@ class TestGithubOrgClient(unittest.TestCase):
             mock_org.return_value = test_payload
 
             client = GithubOrgClient("test_org")
-
             result = client._public_repos_url
 
             self.assertEqual(
                 result,
                 "https://api.github.com/orgs/test_org/repos"
             )
+
+
+if __name__ == "__main__":
+    unittest.main()
