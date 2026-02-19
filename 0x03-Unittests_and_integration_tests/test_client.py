@@ -51,6 +51,40 @@ class TestGithubOrgClient(unittest.TestCase):
                 "https://api.github.com/orgs/test_org/repos"
             )
 
+            mock_org.assert_called_once()
+
+    @patch("client.get_json")
+    def test_public_repos(self, mock_get_json):
+        """Test that public_repos returns expected list of repo names"""
+
+        test_payload = [
+            {"name": "repo1"},
+            {"name": "repo2"},
+            {"name": "repo3"},
+        ]
+
+        mock_get_json.return_value = test_payload
+
+        with patch.object(
+            GithubOrgClient,
+            "_public_repos_url",
+            new_callable=PropertyMock
+        ) as mock_repos_url:
+
+            mock_repos_url.return_value = (
+                "https://api.github.com/orgs/test_org/repos"
+            )
+
+            client = GithubOrgClient("test_org")
+            result = client.public_repos()
+
+            self.assertEqual(result, ["repo1", "repo2", "repo3"])
+
+            mock_repos_url.assert_called_once()
+            mock_get_json.assert_called_once_with(
+                "https://api.github.com/orgs/test_org/repos"
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
